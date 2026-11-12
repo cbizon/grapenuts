@@ -22,6 +22,14 @@ The spring stiffness `k` is the one physical parameter: it sets
 `t_c = pi sqrt(m_eff / k)`. As `k` grows the method tends to the hard-sphere
 engine.
 
+## Status
+
+- `granular/column.py`: a one-dimensional prototype (a column of spheres on
+  the plate) with the three triggers. Tests in `tests/test_column.py`.
+- `results/column_pilot.md`: the first pilot, overlap, energy error and cost
+  against stiffness, time step and trigger.
+- The springs are not in the event-driven engine (`granular/edmd.py`) yet.
+
 ## Provenance
 
 `granular/{__init__,edmd,sim,runner,export}.py` and the tests
