@@ -23,12 +23,12 @@ def place(sim, rows, spin=0.0):
     sim.rebuild(sort=False)
 
 
-def collide_pair(vn, vt, mode, stiffness=1e8):
+def collide_pair(vn, vt, mode, stiffness=1e8, **kwargs):
     """Two unit spheres in free fall meeting along x with closing speed vn
     and tangential (z) relative speed vt.  Returns velocities and spins after
     the collision."""
     sim = Simulation(2, 20.0, 0.0, 0.3, 5.0, 1, dim=2, contact_mode=mode,
-                     stiffness=stiffness, steps_per_contact=50)
+                     stiffness=stiffness, steps_per_contact=50, **kwargs)
     gap = 0.01
     place(sim, [(9.5 - gap / 2, 30.0, vn / 2, vt / 2),
                 (10.5 + gap / 2, 30.0, -vn / 2, -vt / 2)])
@@ -66,11 +66,28 @@ def test_soft_sliding_collision_matches_walton(vn):
     assert abs(wh[0, 1]) > MU * vn       # the collision did spin the spheres
 
 
+@pytest.mark.parametrize("mu", [0.25, 0.5, 1.0])
+@pytest.mark.parametrize("ratio", [0.1, 0.5, 1.0, 2.0, 3.0, 4.5, 6.0])
+def test_soft_collision_matches_walton_at_every_angle(mu, ratio):
+    """With the Walton collision phase an isolated spring collision ends with
+    the hard operator's velocities and spins, in the rolling regime, the
+    sliding regime and between."""
+    vn = 1.0
+    vh, wh = collide_pair(vn, ratio * vn, "never", mu=mu)
+    vs, ws = collide_pair(vn, ratio * vn, "always", mu=mu)
+    # the line of centres turns by about ratio * vn * contact time during a
+    # spring contact, which mixes the components at that order
+    tolerance = 3e-3 * vn * (1.0 + ratio)
+    assert np.allclose(vs, vh, rtol=0.0, atol=tolerance)
+    assert np.allclose(ws, wh, rtol=0.0, atol=2.0 * tolerance)
+
+
 @pytest.mark.parametrize("vt", [0.02, 0.1])
-def test_soft_sticking_collision_reverses_surface_velocity_by_beta0(vt):
-    """At near-normal incidence the tangential spring returns the surface
-    velocity reversed by about the paper's beta0 (KT_RATIO is set for this)."""
-    v, w = collide_pair(1.0, vt, "always")
+def test_tangential_spring_alone_reverses_surface_velocity_by_beta0(vt):
+    """With the spring-only law, at near-normal incidence the tangential
+    spring returns the surface velocity reversed by about the paper's beta0
+    (KT_RATIO is set for this)."""
+    v, w = collide_pair(1.0, vt, "always", tangential="spring")
     surface_before = -vt
     # n = +x, so n x (r_a w_a + r_b w_b) has z component r (w_ay + w_by)
     surface_after = (v[1, 2] - v[0, 2]) + 0.5 * (w[0, 1] + w[1, 1])

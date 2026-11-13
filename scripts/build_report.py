@@ -77,7 +77,7 @@ __SUMMARY__
 </div>
 
 <h2>Against Walton's collision rule</h2>
-<p>Two unit spheres collide once, with the line of centres fixed at the moment of touch. The horizontal axis is the incoming tangential surface speed divided by the normal closing speed; the vertical axis is the same ratio after the collision. Negative means the surface velocity reversed. Lines are the hard (Walton) collision in the engine; dots are one spring contact (k = 1e8, 50 kicks per contact time, so the time step is not the issue).</p>
+<p>Two unit spheres collide once, with the line of centres fixed at the moment of touch. The horizontal axis is the incoming tangential surface speed divided by the normal closing speed; the vertical axis is the same ratio after the collision. Negative means the surface velocity reversed. Lines are the hard (Walton) collision in the engine; dots are one spring contact. A spring now delivers Walton's tangential impulse during the collision and uses its tangential spring only if the contact outlasts one.</p>
 <div class="grid" id="walton"></div>
 
 <h2>Against the spring-dashpot laws</h2>
@@ -221,14 +221,14 @@ const PSI_IN = 'Incoming tangential / normal speed', PSI_OUT = 'Outgoing tangent
     series.push({name: 'hard, μ = ' + mu, color: COLORS[i], mark: 'line', pts: rows.map(r => [r.psi_in, r.hard])});
     series.push({name: 'spring, μ = ' + mu, color: COLORS[i], mark: 'dots', pts: rows.map(r => [r.psi_in, r.soft])});
   });
-  chart(walton, {title: 'Friction coefficient', note: 'Normal closing speed 1. The paper uses μ = 0.5.', xlabel: PSI_IN, ylabel: PSI_OUT, series});
+  chart(walton, {title: 'Friction coefficient', note: 'Normal closing speed 1, k = 1e8, 50 kicks per contact time. The paper uses μ = 0.5.', xlabel: PSI_IN, ylabel: PSI_OUT, series});
 }
 {
   const series = [{name: 'hard (β0 = 0.35)', color: 'var(--ref)', mark: 'line', pts: V.kt_ratio_hard.map(r => [r.psi_in, r.hard])}];
   [[0.125, 'spring, kt/kn = 0.125'], [0.2, 'spring, kt/kn = 0.2'], [2 / 7, 'spring, kt/kn = 2/7']].forEach(([ratio, name], i) => {
     series.push({name, color: COLORS[i], mark: 'dots', pts: V.kt_ratio.filter(r => Math.abs(r.kt_ratio - ratio) < 1e-6).map(r => [r.psi_in, r.soft])});
   });
-  chart(walton, {title: 'Tangential spring stiffness', note: 'μ = 0.5, closing speed 1. The engine default is 0.125.', xlabel: PSI_IN, ylabel: PSI_OUT, series});
+  chart(walton, {title: 'The tangential spring alone', note: 'The earlier law, without the Walton collision phase. μ = 0.5, closing speed 1, k = 1e8.', xlabel: PSI_IN, ylabel: PSI_OUT, series});
 }
 {
   const series = [];
@@ -237,7 +237,7 @@ const PSI_IN = 'Incoming tangential / normal speed', PSI_OUT = 'Outgoing tangent
     series.push({name: 'hard, speed ' + vn, color: COLORS[i], mark: 'line', pts: rows.map(r => [r.psi_in, r.hard])});
     series.push({name: 'spring, speed ' + vn, color: COLORS[i], mark: 'dots', pts: rows.map(r => [r.psi_in, r.soft])});
   });
-  chart(walton, {title: 'Normal closing speed', note: 'μ = 0.5. Restitution is 0.95 at speed 0.1 and 0.7 at 1 and 4, which moves the sliding line.', xlabel: PSI_IN, ylabel: PSI_OUT, series});
+  chart(walton, {title: 'Normal closing speed, at working settings', note: 'μ = 0.5, k = 1e6, 20 kicks per contact time. At high speed and grazing angle the line of centres turns during the contact.', xlabel: PSI_IN, ylabel: PSI_OUT, series});
 }
 chart(walton, {title: 'Normal restitution against impact speed', note: 'Head-on collisions at k = 1e6. The line is the paper\'s e(v) = 1 − 0.3 v^0.75, held at 0.7 above speed 1.',
   xlabel: 'Normal closing speed', ylabel: 'Restitution', xlog: true,

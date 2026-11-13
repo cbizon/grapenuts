@@ -20,6 +20,7 @@ PHI = 0.58         # packing fraction used to define the layer depth
 
 # soft contacts (not in the paper)
 KT_RATIO = 0.125   # tangential / normal spring stiffness; gives beta0 = 0.35 (measured)
+TANGENTIAL_LAWS = {"spring": K.TANG_SPRING, "walton": K.TANG_WALTON}
 CONTACT_MODES = {"never": K.MODE_NEVER, "always": K.MODE_ALWAYS, "tc": K.MODE_TC}
 
 
@@ -109,8 +110,11 @@ class Simulation:
     tangential one relative to it; the springs act as impulses every
     t_c / ``steps_per_contact``, with t_c = pi sqrt(m_eff / k) for two
     spheres of diameter 1.  ``tc_window`` (default t_c) and
-    ``soft_speed_limit`` belong to the ``"tc"`` trigger.  Side walls are
-    always hard.
+    ``soft_speed_limit`` belong to the ``"tc"`` trigger.  ``tangential`` is
+    the friction law of a spring: ``"walton"`` delivers Walton's collision
+    impulse first and uses the tangential spring only once the contact
+    outlasts an isolated collision; ``"spring"`` uses the spring throughout.
+    Side walls are always hard.
     """
 
     def __init__(self, n_particles, box_width, gamma, f_star, depth, seed,
@@ -118,13 +122,16 @@ class Simulation:
                  btol=1e-10, mu=MU,
                  eps=EPS, alpha=ALPHA, v0=V0, dim=3,
                  contact_mode="never", stiffness=None, steps_per_contact=20.0,
-                 kt_ratio=KT_RATIO, tc_window=None, soft_speed_limit=math.inf):
+                 kt_ratio=KT_RATIO, tc_window=None, soft_speed_limit=math.inf,
+                 tangential="walton"):
         if dim not in (2, 3):
             raise ValueError("dim must be 2 or 3, got %r" % (dim,))
         if contact_mode not in CONTACT_MODES:
             raise ValueError("unknown contact_mode %r" % (contact_mode,))
         if contact_mode != "never" and stiffness is None:
             raise ValueError("contact_mode %r needs a stiffness" % (contact_mode,))
+        if tangential not in TANGENTIAL_LAWS:
+            raise ValueError("unknown tangential law %r" % (tangential,))
         self.contact_mode = contact_mode
         self.dim = int(dim)
         self.N = int(n_particles)
@@ -232,6 +239,7 @@ class Simulation:
         self.IP[K.I_N] = self.N
         self.IP[K.I_M] = M
         self.IP[K.I_MODE] = CONTACT_MODES[contact_mode]
+        self.IP[K.I_TANG] = TANGENTIAL_LAWS[tangential]
 
         self.cellof = np.zeros(self.N, dtype=np.int64)
         self.head = -np.ones(nx * self.ny * self.nz, dtype=np.int64)
@@ -250,7 +258,8 @@ class Simulation:
         self.cb = np.zeros(cap, dtype=np.int64)
         self.cgam = np.zeros(cap)
         self.cxi = np.zeros((cap, 3))
-        self.cscr = np.zeros((cap, 6))
+        self.cwal = np.zeros((cap, 6))
+        self.cscr = np.zeros((cap, 9))
         self.cp = np.zeros((self.N, K.MAXC), dtype=np.int64)
         self.ncp = np.zeros(self.N, dtype=np.int64)
         self.last = np.full(self.N, -np.inf)
@@ -314,7 +323,8 @@ class Simulation:
                           self.nxt, self.prv, self.ev_t, self.ev_type,
                           self.ev_p, self.tree, self.P, self.IP,
                           float(t_local_stop), max_events, self.cnt, self.en,
-                          self.ca, self.cb, self.cgam, self.cxi, self.cscr,
+                          self.ca, self.cb, self.cgam, self.cxi, self.cwal,
+                          self.cscr,
                           self.cp, self.ncp, self.last, self.dV, self.dW,
                           self.flag, self.touched, self.si, self.sf)
         if st == 0:
@@ -388,7 +398,8 @@ class Simulation:
             kick_forces=int(self.cnt[K.C_KICKF]),
             max_pair_overlap=float(self.sf[K.SF_MAX_PAIR_OVERLAP]),
             max_plate_overlap=float(self.sf[K.SF_MAX_PLATE_OVERLAP]),
-            max_spring_speed=float(self.sf[K.SF_MAX_SPRING_SPEED]))
+            max_spring_speed=float(self.sf[K.SF_MAX_SPRING_SPEED]),
+            friction_gain=float(self.sf[K.SF_FRICTION_GAIN]))
 
     def overlap_check(self):
         """Minimum pair gap with states projected to the current time
@@ -412,7 +423,8 @@ class Simulation:
                  pid=self.pid, cycle=self.cycle, t_local=self.t_local,
                  cnt=self.cnt, en=self.en,
                  ca=self.ca[:nc], cb=self.cb[:nc], cgam=self.cgam[:nc],
-                 cxi=self.cxi[:nc], last=self.last, sf=self.sf,
+                 cxi=self.cxi[:nc], cwal=self.cwal[:nc], last=self.last,
+                 sf=self.sf,
                  kick_time=self.ev_t[self.N],
                  params=np.array([self.N, self.L, self.gamma, self.f_star,
                                   self.depth, self.seed, self.dim]))
@@ -442,6 +454,7 @@ class Simulation:
         self.cb[:nc] = d["cb"]
         self.cgam[:nc] = d["cgam"]
         self.cxi[:nc] = d["cxi"]
+        self.cwal[:nc] = d["cwal"]
         self.last[:] = d["last"]
         self.sf[:] = d["sf"]
         self.ev_t[self.N] = float(d["kick_time"])

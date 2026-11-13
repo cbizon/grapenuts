@@ -86,22 +86,24 @@ def main():
                                         hard_normal=hard["normal_out"],
                                         soft_normal=soft["normal_out"]))
 
-    # ... and for several tangential stiffnesses at the paper's mu
+    # the tangential spring alone (no Walton collision phase), for several
+    # tangential stiffnesses at the paper's mu
     out["kt_ratio"] = []
     for ratio in (0.08, KT_RATIO, 0.2, 2.0 / 7.0):
         for p in psi:
-            soft = pair(1.0, p, "always", kt_ratio=ratio, **STIFF)
+            soft = pair(1.0, p, "always", kt_ratio=ratio, tangential="spring", **STIFF)
             out["kt_ratio"].append(dict(kt_ratio=ratio, psi_in=p, soft=soft["psi_out"]))
     out["kt_ratio_hard"] = [dict(psi_in=p, hard=pair(1.0, p, "never")["psi_out"])
                             for p in psi]
 
-    # ... and for several impact speeds (restitution changes with speed)
+    # ... and for several impact speeds, at the stiffness and time step the
+    # layer runs use (k = 1e6, 20 kicks per contact time)
     out["speed_tangential"] = []
     for vn in (0.1, 1.0, 4.0):
         for p in psi:
             out["speed_tangential"].append(dict(
                 vn=vn, psi_in=p, hard=pair(vn, p, "never")["psi_out"],
-                soft=pair(vn, p, "always", **STIFF)["psi_out"]))
+                soft=pair(vn, p, "always")["psi_out"]))
 
     # normal restitution against the paper's law
     out["restitution"] = []

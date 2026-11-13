@@ -37,6 +37,14 @@ EV_KICK = 6    # spring impulses on every soft contact (scheduled in slot N)
 
 # which touches become springs (IP[I_MODE]); see touch_is_soft
 MODE_NEVER, MODE_ALWAYS, MODE_TC = 0, 1, 2
+# tangential law of a spring (IP[I_TANG]): the tangential spring alone, or
+# Walton's collision impulse first and the spring once the contact outlasts
+# an isolated collision; see kick
+TANG_SPRING, TANG_WALTON = 0, 1
+# per-spring collision-phase state (cwal columns): unit direction of the
+# Walton impulse on sphere a, how much of it is left to deliver, its ratio to
+# the normal impulse, and how much of the collision phase is left
+CW_DX, CW_DY, CW_DZ, CW_LEFT, CW_RATIO, CW_TIME = range(6)
 PLATE = -2     # partner code of the bottom plate in the soft-contact lists
 MAXC = 16      # soft contacts one sphere can hold
 
@@ -48,8 +56,8 @@ P_L, P_HX, P_HZ, P_Z0, P_A, P_OM, P_G, P_EPS, P_ALPHA, P_V0, P_B, P_MU, \
     P_BETA0, P_K, P_BTOL, P_RMAX, P_KN, P_KT, P_DT, P_TCW, P_VSOFT = range(21)
 NP_FLOAT = 21
 # int parameter vector layout
-I_NX, I_NY, I_NZ, I_N, I_M, I_MODE = range(6)
-NP_INT = 6
+I_NX, I_NY, I_NZ, I_N, I_M, I_MODE, I_TANG = range(7)
+NP_INT = 7
 
 # counters
 C_PP, C_WALL, C_PLATE, C_CELL, C_ADV, C_EVENTS, C_PPSKIP, C_PLSKIP, \
@@ -62,10 +70,12 @@ EN_PLATE_WORK, EN_PLATE_DISS, EN_PP_DISS, EN_WALL_DISS, EN_PLATE_JZ, \
     EN_WALL_JZ, EN_MAX_GAIN, EN_SOFT_DISS = range(8)
 NEN = 8
 # soft-contact state: integers (number of springs) and floats (largest pair
-# and plate overlap seen at a kick, largest approach speed at spring creation)
+# and plate overlap seen at a kick, largest approach speed at spring creation,
+# and the total of any positive work done by friction impulses)
 SI_NC = 0
 NSI = 2
-SF_MAX_PAIR_OVERLAP, SF_MAX_PLATE_OVERLAP, SF_MAX_SPRING_SPEED = range(3)
+SF_MAX_PAIR_OVERLAP, SF_MAX_PLATE_OVERLAP, SF_MAX_SPRING_SPEED, \
+    SF_FRICTION_GAIN = range(4)
 NSF = 4
 # a collision "gains" energy in its dissipation frame when the gain exceeds
 # round-off: this relative tolerance times the frame energy, plus a floor
@@ -286,11 +296,16 @@ def touch_is_soft(i, j, closing, t, last, ncp, P, IP):
 
 
 @njit(cache=True)
-def spring_add(a, b, closing, meff, t, ca, cb, cgam, cxi, cp, ncp, si, sf, P,
-               cnt, ev_t, ev_type, tree, IP):
-    """Create a spring between sphere a and b (PLATE for the plate).  Its
-    damping is fixed here so that an isolated linear spring-dashpot collision
-    at this approach speed has the paper's restitution e(closing)."""
+def spring_add(a, b, closing, meff, t, S, W, ca, cb, cgam, cxi, cwal, cp, ncp,
+               si, sf, P, cnt, ev_t, ev_type, tree, IP):
+    """Create a spring between sphere a and b (PLATE for the plate), both
+    states at time t.  Its damping is fixed here so that an isolated linear
+    spring-dashpot collision at this approach speed has the paper's
+    restitution e(closing).
+
+    With TANG_WALTON the tangential impulse Walton's operator would deliver
+    in this collision is worked out here too (as in collide_pp), to be
+    delivered over the collision in proportion to the normal force."""
     c = si[SI_NC]
     if c >= ca.shape[0]:
         raise RuntimeError("soft-contact list is full")
@@ -303,6 +318,27 @@ def spring_add(a, b, closing, meff, t, ca, cb, cgam, cxi, cp, ncp, si, sf, P,
     cxi[c, 0] = 0.0
     cxi[c, 1] = 0.0
     cxi[c, 2] = 0.0
+    for q in range(6):
+        cwal[c, q] = 0.0
+    cwal[c, CW_TIME] = -INF
+    if IP[I_TANG] == TANG_WALTON:
+        zp = P[P_A] * np.sin(P[P_OM] * t)
+        vp = P[P_A] * P[P_OM] * np.cos(P[P_OM] * t)
+        nx_, ny_, nz_, delta, vn, vsx, vsy, vsz = contact_state(a, b, S, W, zp, vp)
+        vs = np.sqrt(vsx * vsx + vsy * vsy + vsz * vsz)
+        Kin = P[P_K]
+        if vs > 0.0:
+            onepb = P[P_MU] * (1.0 + e) * (1.0 + 1.0 / Kin) * closing / vs
+            if onepb > 1.0 + P[P_BETA0]:
+                onepb = 1.0 + P[P_BETA0]
+            impulse = meff * Kin * onepb / (Kin + 1.0) * vs
+            cwal[c, CW_DX] = vsx / vs
+            cwal[c, CW_DY] = vsy / vs
+            cwal[c, CW_DZ] = vsz / vs
+            cwal[c, CW_LEFT] = impulse
+            cwal[c, CW_RATIO] = impulse / (meff * (1.0 + e) * closing)
+        # how long an isolated collision of this contact lasts
+        cwal[c, CW_TIME] = np.pi / np.sqrt(P[P_KN] / meff * (1.0 - zeta * zeta))
     si[SI_NC] = c + 1
     partner_add(a, b, cp, ncp)
     if b >= 0:
@@ -881,16 +917,22 @@ def contact_state(a, b, S, W, zp, vp):
 
 @njit(cache=True)
 def kick(t, S, W, mass, cellof, head, nxt, ev_t, ev_type, ev_p, tree, P, IP,
-         cnt, en, ca, cb, cgam, cxi, cscr, cp, ncp, last, dV, dW, flag,
+         cnt, en, ca, cb, cgam, cxi, cwal, cscr, cp, ncp, last, dV, dW, flag,
          touched, si, sf):
     """Apply one time step's impulse of every spring at time t.
 
     Normal force on a contact compressed by delta and closing at rate c:
     kn delta + gamma c, along the line of centres (not clamped at zero, so an
     isolated collision has exactly the restitution its damping was set for).
-    Tangential force: kt xi, where xi accumulates the relative surface
-    displacement since the spring was made, shortened so that
-    kt |xi| <= mu max(normal force, 0) (Coulomb sliding).  All forces are
+    Tangential force, sustained phase: kt xi, where xi accumulates the
+    relative surface displacement, shortened so that
+    kt |xi| <= mu max(normal force, 0) (Coulomb sliding).  With TANG_WALTON
+    a spring first goes through a collision phase, for as long as an isolated
+    collision of that contact lasts (plus one kick): the tangential impulse
+    is the Walton impulse worked out at creation, delivered as its ratio to
+    the normal impulse times the normal force, up to its total.  An isolated
+    collision therefore ends with Walton's tangential result, and only a
+    contact that outlasts one gets the spring (from zero stretch).  All forces are
     computed from the same state, then applied, then every sphere that was
     kicked re-predicts its events.  A spring found open is removed.
 
@@ -944,52 +986,86 @@ def kick(t, S, W, mass, cellof, head, nxt, ev_t, ev_type, ev_p, tree, P, IP,
             cxi[c, 0] = cxi[m, 0]
             cxi[c, 1] = cxi[m, 1]
             cxi[c, 2] = cxi[m, 2]
+            for q in range(6):
+                cwal[c, q] = cwal[m, q]
             si[SI_NC] = m
             continue
         closing = -vn
-        # turn xi into the current tangent plane, keeping its length
-        length = np.sqrt(xx * xx + xy * xy + xz * xz)
-        along = xx * nx_ + xy * ny_ + xz * nz_
-        xx -= along * nx_
-        xy -= along * ny_
-        xz -= along * nz_
-        flat = np.sqrt(xx * xx + xy * xy + xz * xz)
-        if flat > 0.0:
-            scale = length / flat
-            xx *= scale
-            xy *= scale
-            xz *= scale
-        stored = length * length
-        xx += vsx * dt
-        xy += vsy * dt
-        xz += vsz * dt
         fn = kn * delta + cgam[c] * closing
-        cap = mu * max(fn, 0.0)
-        length = np.sqrt(xx * xx + xy * xy + xz * xz)
         cscr[c, 2] = 0.0
-        if kt * length > cap:
-            # sliding: the spring is cut back to the Coulomb limit.  The
-            # energy lost is the friction force's work on the slip (booked
-            # after the kick, from the mean surface velocity) plus the
-            # change in the spring's stored energy.
-            shorter = cap / kt
-            scale = shorter / length
-            xx *= scale
-            xy *= scale
-            xz *= scale
-            en[EN_SOFT_DISS] += 0.5 * kt * (shorter * shorter - stored)
-            cscr[c, 2] = 1.0
-            cscr[c, 3] = vsx
-            cscr[c, 4] = vsy
-            cscr[c, 5] = vsz
-        cxi[c, 0] = xx
-        cxi[c, 1] = xy
-        cxi[c, 2] = xz
+        if cwal[c, CW_TIME] > -dt:
+            # collision phase: deliver the Walton impulse with the normal force
+            cwal[c, CW_TIME] -= dt
+            ex = cwal[c, CW_DX]
+            ey = cwal[c, CW_DY]
+            ez = cwal[c, CW_DZ]
+            along = ex * nx_ + ey * ny_ + ez * nz_
+            ex -= along * nx_
+            ey -= along * ny_
+            ez -= along * nz_
+            flat = np.sqrt(ex * ex + ey * ey + ez * ez)
+            size = 0.0
+            if flat > 0.0:
+                ex /= flat
+                ey /= flat
+                ez /= flat
+                size = min(cwal[c, CW_RATIO] * max(fn, 0.0) * dt, cwal[c, CW_LEFT])
+                cwal[c, CW_DX] = ex
+                cwal[c, CW_DY] = ey
+                cwal[c, CW_DZ] = ez
+                cwal[c, CW_LEFT] -= size
+            jtx = size * ex
+            jty = size * ey
+            jtz = size * ez
+            if size > 0.0:
+                cscr[c, 2] = 1.0
+        else:
+            # sustained phase: turn xi into the current tangent plane, keeping
+            # its length, then stretch it by the surface displacement
+            length = np.sqrt(xx * xx + xy * xy + xz * xz)
+            along = xx * nx_ + xy * ny_ + xz * nz_
+            xx -= along * nx_
+            xy -= along * ny_
+            xz -= along * nz_
+            flat = np.sqrt(xx * xx + xy * xy + xz * xz)
+            if flat > 0.0:
+                scale = length / flat
+                xx *= scale
+                xy *= scale
+                xz *= scale
+            stored = length * length
+            xx += vsx * dt
+            xy += vsy * dt
+            xz += vsz * dt
+            cap = mu * max(fn, 0.0)
+            length = np.sqrt(xx * xx + xy * xy + xz * xz)
+            if kt * length > cap:
+                # sliding: the spring is cut back to the Coulomb limit.  The
+                # energy lost is the friction force's work on the slip
+                # (booked after the kick) plus the change in the spring's
+                # stored energy.
+                shorter = cap / kt
+                scale = shorter / length
+                xx *= scale
+                xy *= scale
+                xz *= scale
+                en[EN_SOFT_DISS] += 0.5 * kt * (shorter * shorter - stored)
+                cscr[c, 2] = 1.0
+            cxi[c, 0] = xx
+            cxi[c, 1] = xy
+            cxi[c, 2] = xz
+            jtx = kt * xx * dt
+            jty = kt * xy * dt
+            jtz = kt * xz * dt
+        # friction work is booked after the kick from the mean surface velocity
+        cscr[c, 3] = vsx
+        cscr[c, 4] = vsy
+        cscr[c, 5] = vsz
+        cscr[c, 6] = jtx
+        cscr[c, 7] = jty
+        cscr[c, 8] = jtz
         # impulse on a: normal pushes it away from b, friction drags it along
         # b's surface motion
-        jtx = kt * xx * dt
-        jty = kt * xy * dt
-        jtz = kt * xz * dt
         jx = -fn * dt * nx_ + jtx
         jy = -fn * dt * ny_ + jty
         jz = -fn * dt * nz_ + jtz
@@ -1046,9 +1122,12 @@ def kick(t, S, W, mass, cellof, head, nxt, ev_t, ev_type, ev_p, tree, P, IP,
             ca[c], cb[c], S, W, zp, vp)
         en[EN_SOFT_DISS] -= cscr[c, 0] * 0.5 * (cscr[c, 1] - vn)
         if cscr[c, 2] != 0.0:
-            en[EN_SOFT_DISS] -= 0.5 * kt * dt * (
-                cxi[c, 0] * (cscr[c, 3] + vsx) + cxi[c, 1] * (cscr[c, 4] + vsy)
-                + cxi[c, 2] * (cscr[c, 5] + vsz))
+            work = -0.5 * (cscr[c, 6] * (cscr[c, 3] + vsx)
+                           + cscr[c, 7] * (cscr[c, 4] + vsy)
+                           + cscr[c, 8] * (cscr[c, 5] + vsz))
+            en[EN_SOFT_DISS] += work
+            if work > 0.0:
+                sf[SF_FRICTION_GAIN] += work
     # every kicked sphere re-predicts; an event it was the partner of is void
     for k in range(ntouch):
         i = touched[k]
@@ -1073,8 +1152,8 @@ def kick(t, S, W, mass, cellof, head, nxt, ev_t, ev_type, ev_p, tree, P, IP,
 
 @njit(cache=True)
 def run_events(S, W, mass, cellof, head, nxt, prv, ev_t, ev_type, ev_p, tree,
-               P, IP, t_stop, max_events, cnt, en, ca, cb, cgam, cxi, cscr, cp,
-               ncp, last, dV, dW, flag, touched, si, sf):
+               P, IP, t_stop, max_events, cnt, en, ca, cb, cgam, cxi, cwal, cscr,
+               cp, ncp, last, dV, dW, flag, touched, si, sf):
     """Process all events with time < t_stop (or until max_events).
     Returns 0 if t_stop was reached, 1 if max_events was hit.
 
@@ -1108,8 +1187,8 @@ def run_events(S, W, mass, cellof, head, nxt, prv, ev_t, ev_type, ev_p, tree,
         typ = ev_type[i]
         if typ == EV_KICK:
             kick(t, S, W, mass, cellof, head, nxt, ev_t, ev_type, ev_p, tree,
-                 P, IP, cnt, en, ca, cb, cgam, cxi, cscr, cp, ncp, last, dV,
-                 dW, flag, touched, si, sf)
+                 P, IP, cnt, en, ca, cb, cgam, cxi, cwal, cscr, cp, ncp, last,
+                 dV, dW, flag, touched, si, sf)
         elif typ == EV_PP:
             j = ev_p[i]
             advance(i, t, S, g)
@@ -1125,9 +1204,9 @@ def run_events(S, W, mass, cellof, head, nxt, prv, ev_t, ev_type, ev_p, tree,
                                 dx * dx + dy * dy + dz * dz)
             if closing > 0.0 and touch_is_soft(i, j, closing, t, last, ncp, P, IP):
                 spring_add(i, j, closing,
-                           mass[i] * mass[j] / (mass[i] + mass[j]), t, ca, cb,
-                           cgam, cxi, cp, ncp, si, sf, P, cnt, ev_t, ev_type,
-                           tree, IP)
+                           mass[i] * mass[j] / (mass[i] + mass[j]), t, S, W,
+                           ca, cb, cgam, cxi, cwal, cp, ncp, si, sf, P, cnt,
+                           ev_t, ev_type, tree, IP)
             else:
                 before = (particle_energy(i, S, W, mass, Kin, 0.0)
                           + particle_energy(j, S, W, mass, Kin, 0.0))
@@ -1176,8 +1255,9 @@ def run_events(S, W, mass, cellof, head, nxt, prv, ev_t, ev_type, ev_p, tree,
             closing = vp - S[i, SVZ]
             if closing > 0.0 and touch_is_soft(i, PLATE, closing, t, last, ncp,
                                                P, IP):
-                spring_add(i, PLATE, closing, mass[i], t, ca, cb, cgam, cxi,
-                           cp, ncp, si, sf, P, cnt, ev_t, ev_type, tree, IP)
+                spring_add(i, PLATE, closing, mass[i], t, S, W, ca, cb, cgam,
+                           cxi, cwal, cp, ncp, si, sf, P, cnt, ev_t, ev_type,
+                           tree, IP)
             else:
                 vz_before = S[i, SVZ]
                 before = particle_energy(i, S, W, mass, Kin, vp)
