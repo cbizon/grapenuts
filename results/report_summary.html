@@ -1,0 +1,11 @@
+<p><strong>What the checks show.</strong></p>
+<ul>
+<li><strong>Normal contact follows the spring-dashpot laws.</strong> Contact time is within 2% and peak overlap within 0.4% of the law from k = 1e4 to 1e8.</li>
+<li><strong>Restitution needs a fine time step.</strong> At 50 kicks per contact time it matches the paper's e(v) within 0.6%. At 20 it is up to 3.2% too bouncy (0.722 against 0.700).</li>
+<li><strong>Friction matches Walton only at the two ends.</strong> Near head-on, the spring reverses the surface velocity by 0.34 against Walton's 0.35. In grazing collisions both slide and agree (5.04 against 5.03 at a ratio of 8). In between they differ a lot: at a ratio of 2, Walton gives −0.70 and the spring −0.04. No tangential stiffness fixes this; a stiffer spring tracks the middle better and overshoots near head-on.</li>
+<li><strong>Sustained friction is exact.</strong> A sphere set sliding on the plate ends rolling at 5/7 of its speed, on the predicted line throughout.</li>
+<li><strong>Where the hard engine runs, the hybrid converges to it.</strong> At Γ = 3.5, f* = 0.5, mean height is 4.517 hard, 4.557 at k = 1e5, 4.524 at 1e6 and 4.519 at 1e7, with seed scatter about 0.004.</li>
+<li><strong>Where the hard engine stalls, every hybrid run finishes.</strong> At Γ = 5, f* = 0.3, 10 layers, the hard engine used 300 million events in one twentieth of a cycle before cycle 3 at all three seeds. All 15 runs with springs completed 120 cycles.</li>
+<li><strong>There the answer is not yet converged in stiffness.</strong> Mean height is 23.78, 23.59 and 23.57 at k = 1e5, 1e6 and 1e7 (seed scatter about 0.05), but kinetic energy per sphere is still rising: 14.46, 14.88, 15.03. Largest overlap falls from 6.5% to 1.6% to 0.48% of a diameter, and CPU per run doubles each decade: 108, 233, 459 seconds.</li>
+<li><strong>Energy books.</strong> At 20 kicks per contact time the runs with springs lose 2e-3 to 4e-3 of throughput unaccounted at the stalling condition. Making springs only below speed 0.1 gains 2e-3 there instead.</li>
+</ul>
