@@ -49,3 +49,43 @@ seeds, 300 million events in one twentieth of a cycle, about 335 CPU s each):
 
 All 15 runs with springs completed 120 cycles. Approach speeds at spring
 creation reach 24 to 29 here. Kinetic energy is still rising with k.
+
+## After the Walton collision phase (commit 7cda4dc), same day
+
+Springs deliver Walton's tangential impulse during a collision and use the
+tangential spring only when a contact outlasts an isolated one. Both result
+files were regenerated with this law; the tables above are the earlier
+spring-only law.
+
+- Tangential, k = 1e8: largest difference from the hard operator 0.0012 in
+  outgoing tangential over normal speed, over mu = 0.25, 0.5, 1 and ratios up
+  to 8.
+- At k = 1e6 and 20 kicks per contact time, mu = 0.5: largest difference 0.014
+  at closing speed 0.1, 0.16 at 1, 0.71 at 4, each at the most grazing angle.
+- Layer energy residual (tc, k = 1e6, 100 spheres, 30 cycles): -1.2e-3 at 10
+  kicks per contact time, -3.2e-4 at 20, -3.7e-5 at 80.
+
+Gamma 3.5, f* 0.5, 5 layers:
+
+| method | height | kinetic | overlap | energy residual |
+| --- | --- | --- | --- | --- |
+| hard | 4.517 | 1.069 | none | 1e-14 |
+| tc k=1e5 | 4.555 | 1.105 | 0.018 | -7.4e-4 |
+| tc k=1e6 | 4.524 | 1.076 | 0.0053 | -2.6e-4 |
+| tc k=1e7 | 4.518 | 1.070 | 0.0018 | -3.4e-5 |
+| tc k=1e6, springs below 0.1 | 4.516 | 1.067 | 0.0036 | -5.0e-7 |
+| always k=1e6 | 4.528 | 1.083 | 0.0056 | -1.4e-3 |
+
+Gamma 5, f* 0.3, 10 layers (hard stalled at 3 of 3 seeds, as before):
+
+| method | height | kinetic | overlap | CPU s | energy residual |
+| --- | --- | --- | --- | --- | --- |
+| tc k=1e5 | 23.77 | 14.82 | 0.068 | 112 | -1.9e-3 |
+| tc k=1e6 | 23.68 | 14.89 | 0.016 | 225 | -1.5e-3 |
+| tc k=1e7 | 23.50 | 15.09 | 0.0048 | 497 | -1.1e-3 |
+| tc k=1e6, springs below 0.1 | 23.53 | 14.92 | 0.015 | 198 | +1.6e-3 |
+| always k=1e6 | 23.64 | 15.01 | 0.017 | 266 | -2.1e-3 |
+
+Seed standard deviations here are 0.02 to 0.08 in height and 0.07 to 0.15 in
+kinetic energy. The dependence on k (about 1% in height, 2% in kinetic
+energy over two decades) is not removed by the friction change.
