@@ -95,6 +95,7 @@ __SUMMARY__
 <script>
 const V = __VALIDATION__;
 const PILOT = __PILOT__;
+const EXTRA = __EXTRA__;
 const COLORS = ['var(--s1)', 'var(--s2)', 'var(--s3)'];
 const NS = 'http://www.w3.org/2000/svg';
 function el(tag, attrs, parent, text) {
@@ -292,6 +293,17 @@ strip('runs hard', 'mean_kinetic_per_sphere', 'Kinetic energy where the hard eng
 strip('stalls hard', 'mean_height', 'Mean height where the hard engine stalls', 'Γ = 5, f* = 0.3, 10 layers. No hard-sphere baseline exists here.', 'Mean centre-of-mass height');
 strip('stalls hard', 'mean_kinetic_per_sphere', 'Kinetic energy where the hard engine stalls', 'Same runs.', 'Mean kinetic energy per sphere');
 
+function sweep(key, title, ylabel) {
+  const rows = PILOT.runs.filter(r => r.condition === 'stalls hard' && r.finished).concat(EXTRA);
+  const pick = (kicks) => rows.filter(r => /^tc k=1e\d/.test(r.method) && !/below/.test(r.method) && (/50 kicks/.test(r.method) ? 50 : 20) === kicks)
+    .map(r => [Number(r.method.match(/k=(1e\d)/)[1]), r[key]]);
+  chart(layer, {title, note: 'Γ = 5, f* = 0.3, 10 layers, tc trigger. One dot per seed.', xlabel: 'Stiffness k', ylabel, xlog: true,
+    series: [{name: '20 kicks per contact', color: COLORS[0], mark: 'dots', pts: pick(20)},
+      {name: '50 kicks per contact', color: COLORS[1], mark: 'dots', pts: pick(50)}]});
+}
+sweep('mean_height', 'Mean height against stiffness, stalling condition', 'Mean centre-of-mass height');
+sweep('mean_kinetic_per_sphere', 'Kinetic energy against stiffness, stalling condition', 'Mean kinetic energy per sphere');
+
 function table(id, cond) {
   const host = document.getElementById(id), tb = h('table', '', host);
   const cols = [['Method', null], ['Seeds finished', null], ['Cycles reached', null], ['CPU s per run', 'cpu_seconds'],
@@ -323,10 +335,14 @@ def main():
     out = Path(sys.argv[1])
     validation = json.loads((RESULTS / "validation.json").read_text())
     pilot = json.loads((RESULTS / "layer_pilot.json").read_text())
+    extra = []
+    for name in ("steps_check.json", "stiff_check.json"):
+        extra += [r for r in json.loads((RESULTS / name).read_text())["runs"] if r["finished"]]
     summary_path = RESULTS / "report_summary.html"
     summary = summary_path.read_text() if summary_path.exists() else "<p>Summary pending.</p>"
     page = (PAGE.replace("__VALIDATION__", json.dumps(validation, separators=(",", ":")))
             .replace("__PILOT__", json.dumps(pilot, separators=(",", ":")))
+            .replace("__EXTRA__", json.dumps(extra, separators=(",", ":")))
             .replace("__SUMMARY__", summary)
             .replace("__DATE__", "13 November 2026"))
     out.write_text(page)

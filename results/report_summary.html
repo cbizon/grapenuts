@@ -7,6 +7,8 @@
 <li><strong>Sustained friction is exact.</strong> A sphere set sliding on the plate ends rolling at 5/7 of its speed, on the predicted line throughout.</li>
 <li><strong>Where the hard engine runs, the hybrid converges to it.</strong> At Γ = 3.5, f* = 0.5, mean height is 4.517 hard, 4.555 at k = 1e5, 4.524 at 1e6 and 4.518 at 1e7, with seed scatter about 0.004. The new friction law changed these by less than the scatter.</li>
 <li><strong>Where the hard engine stalls, every hybrid run finishes.</strong> At Γ = 5, f* = 0.3, 10 layers, the hard engine used 300 million events in one twentieth of a cycle before cycle 3 at all three seeds. All 15 runs with springs completed 120 cycles.</li>
-<li><strong>There the answer still depends on stiffness, by about 1 to 2%.</strong> From k = 1e5 to 1e6 to 1e7, mean height is 23.77, 23.68, 23.50 and kinetic energy per sphere 14.82, 14.89, 15.09, with seed scatter up to 0.08 and 0.15. The friction fix did not remove this. Largest overlap is 6.8%, 1.6% and 0.48% of a diameter; CPU per run 112, 225 and 497 seconds.</li>
+<li><strong>There the answer depends on stiffness up to about k = 1e7, then levels off.</strong> Mean height is 23.77, 23.68, 23.50 and 23.45 at k = 1e5, 1e6, 1e7 and 1e8, with seed scatter 0.03 to 0.08. Kinetic energy per sphere is 14.9 to 15.1 from k = 1e6 up, with no trend three seeds can resolve.</li>
+<li><strong>The dependence is softness, not the time step.</strong> Rerunning at 50 kicks per contact time left height unchanged at k = 1e5, 1e6 and 1e7.</li>
+<li><strong>Stiffness costs time.</strong> CPU per run is 112, 225, 497 and 949 seconds from k = 1e5 to 1e8; largest overlap is 6.8%, 1.6%, 0.48% and 0.14% of a diameter.</li>
 <li><strong>Energy books improved.</strong> Unaccounted energy at 20 kicks per contact time is now a loss of 1e-3 to 2e-3 of throughput at the stalling condition, about half what it was. Making springs only below speed 0.1 still gains 1.6e-3.</li>
 </ul>

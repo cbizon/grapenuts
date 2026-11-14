@@ -111,3 +111,29 @@ Mean and standard deviation over three seeds:
   20-kick restitution error (springs too bouncy) was offsetting part of it.
 - The energy residual falls about threefold from 20 to 50 kicks.
 - k = 1e7 was not rerun at 50 kicks.
+
+## Where the dependence on stiffness levels off (`scripts/stiff_check.py`, `results/stiff_check.json`)
+
+Stalling condition, same seeds and protocol, tc trigger, Walton collision
+phase. Mean and standard deviation over three seeds; all runs completed 120
+cycles.
+
+| k | kicks per contact | height | kinetic | largest overlap | energy residual | CPU s |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1e5 | 20 | 23.77 ± 0.07 | 14.82 ± 0.09 | 0.068 | -1.9e-3 | 112 |
+| 1e6 | 20 | 23.68 ± 0.03 | 14.89 ± 0.15 | 0.016 | -1.5e-3 | 225 |
+| 1e7 | 20 | 23.50 ± 0.08 | 15.09 ± 0.11 | 0.0048 | -1.1e-3 | 497 |
+| 1e8 | 20 | 23.45 ± 0.05 | 14.96 ± 0.31 | 0.0014 | -6.4e-4 | 949 |
+| 1e5 | 50 | 23.80 ± 0.06 | 14.44 ± 0.16 | 0.066 | -6.5e-4 | 267 |
+| 1e6 | 50 | 23.68 ± 0.08 | 14.99 ± 0.07 | 0.014 | -5.0e-4 | 533 |
+| 1e7 | 50 | 23.48 ± 0.05 | 14.96 ± 0.22 | 0.0045 | -3.6e-4 | 1209 |
+
+- Height levels off between k = 1e7 and 1e8: 23.50 and 23.45, a difference
+  smaller than the seed scatter. k = 1e6 is about 0.2 (0.9%) above that and
+  k = 1e5 about 0.3 (1.3%).
+- Kinetic energy is 14.9 to 15.1 from k = 1e6 up, with no trend the three
+  seeds can resolve (one k = 1e8 seed gave 14.52). Only k = 1e5 at 50 kicks
+  (14.44) stands clearly apart.
+- k = 1e7 at 50 kicks agrees with k = 1e7 at 20 kicks within scatter.
+- Hard collisions per sphere per cycle rise with k (28, 56, 129, 357) as fewer
+  touches fall inside the contact-time window.
