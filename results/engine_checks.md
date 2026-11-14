@@ -89,3 +89,25 @@ Gamma 5, f* 0.3, 10 layers (hard stalled at 3 of 3 seeds, as before):
 Seed standard deviations here are 0.02 to 0.08 in height and 0.07 to 0.15 in
 kinetic energy. The dependence on k (about 1% in height, 2% in kinetic
 energy over two decades) is not removed by the friction change.
+
+## Time step or softness? (`scripts/steps_check.py`, `results/steps_check.json`)
+
+The stalling condition again (Gamma 5, f* 0.3, 10 layers, same seeds and
+protocol, Walton collision phase), at 50 kicks per contact time instead of 20.
+Mean and standard deviation over three seeds:
+
+| k | kicks per contact | height | kinetic | energy residual | CPU s |
+| --- | --- | --- | --- | --- | --- |
+| 1e5 | 20 | 23.77 ± 0.07 | 14.82 ± 0.09 | -1.9e-3 | 112 |
+| 1e5 | 50 | 23.80 ± 0.06 | 14.44 ± 0.16 | -6.5e-4 | 267 |
+| 1e6 | 20 | 23.68 ± 0.03 | 14.89 ± 0.15 | -1.5e-3 | 225 |
+| 1e6 | 50 | 23.68 ± 0.08 | 14.99 ± 0.07 | -5.0e-4 | 533 |
+| 1e7 | 20 | 23.50 ± 0.08 | 15.09 ± 0.11 | -1.1e-3 | 497 |
+
+- A finer time step does not move either stiffness toward the k = 1e7 values.
+  Height is unchanged at both. Kinetic energy at k = 1e5 moves away (14.82 to
+  14.44); at k = 1e6 it changes within scatter.
+- So the dependence on k is softness, not the time step. At k = 1e5 the
+  20-kick restitution error (springs too bouncy) was offsetting part of it.
+- The energy residual falls about threefold from 20 to 50 kicks.
+- k = 1e7 was not rerun at 50 kicks.
