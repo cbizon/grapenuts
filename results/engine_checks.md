@@ -161,3 +161,37 @@ phases; not saved as a result file): a standing wave that flips between
 impacts, wavelength about 50 D in the 100 D box, the layer landing every
 second plate period. Column centre-of-mass height varies along the box by
 3.7 D rms on average.
+
+## Scan for a flat, hard-landing layer (`scripts/flat_scan.py`, `results/flat_scan.json`), 2026-11-14
+
+2D, 10 layers, hybrid (tc, k = 1e6, 20 kicks per contact time), seed 1, 60
+cycles to settle and 40 measured. Height spread is the standard deviation
+along the box of the column centre-of-mass height (columns 2 D wide),
+averaged over 20 phases per cycle. Peak force is the largest plate force in
+any 1/200th of a cycle, over the layer's weight. Alternation is the
+difference between even- and odd-cycle plate impulse over their sum (near 1
+means the layer lands every second cycle).
+
+| Gamma | f* | L | height spread | largest spread | peak force | alternation | plate speed |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 4.5 | 0.44 | 100 | 0.65 | 2.55 | 20.7 | 0.98 | 5.15 |
+| 4.5 | 0.60 | 100 | 0.50 | 1.49 | 15.7 | 0.98 | 3.77 |
+| 4.5 | 0.80 | 100 | 0.48 | 0.78 | 15.4 | 0.97 | 2.83 |
+| 5.0 | 0.30 | 100 | 2.98 | 13.56 | 37.1 | 0.95 | 8.39 |
+| 5.0 | 0.44 | 100 | 1.42 | 3.93 | 27.4 | 0.96 | 5.72 |
+| 5.0 | 0.60 | 100 | 0.67 | 1.30 | 28.8 | 0.96 | 4.19 |
+| 5.0 | 0.80 | 100 | 0.51 | 0.91 | 19.0 | 0.95 | 3.15 |
+| 5.5 | 0.44 | 100 | 3.23 | 8.66 | 26.7 | 0.88 | 6.29 |
+| 5.5 | 0.60 | 100 | 2.07 | 3.47 | 19.5 | 0.93 | 4.61 |
+| 5.5 | 0.80 | 100 | 1.07 | 2.01 | 17.9 | 0.92 | 3.46 |
+| 5.0 | 0.30 | 20 | 5.03 | 13.22 | 40.5 | 0.00 | 8.39 |
+| 5.0 | 0.44 | 20 | 1.71 | 5.04 | 41.5 | 0.92 | 5.72 |
+
+- Flattest with a hard landing: Gamma 5, f* 0.6 (spread 0.67 D, peak force
+  29 weights). Gamma 4.5 or 5 at f* 0.8 is flatter (about 0.5 D) but lands
+  less hard (15 to 19 weights).
+- In snapshots these are a flat slab, close-packed in the middle, landing
+  every second cycle. At f* 0.6 the 15 to 20 D next to each side wall is
+  loose and splashing.
+- Narrow boxes (L = 20) are not flat: the side walls dominate.
+- One seed each, so the ranking between neighbours is not established.
