@@ -195,3 +195,26 @@ means the layer lands every second cycle).
   loose and splashing.
 - Narrow boxes (L = 20) are not flat: the side walls dominate.
 - One seed each, so the ranking between neighbours is not established.
+
+## Hard against hybrid at the flat condition (`scripts/flat_compare.py`, `results/flat_compare.json`), 2026-11-15
+
+Gamma 5, f* 0.6, 10 layers, L = 100, three seeds, 60 cycles to settle and
+100 measured, tc trigger, 20 kicks per contact time, Walton collision phase.
+
+- Hard engine: 0 of 3 seeds finished. Each used 300 million events in one
+  twentieth of a cycle at cycle 2.85, 2.75 and 2.75 (496 to 599 CPU s).
+- Hybrid: 15 of 15 runs completed all 160 cycles.
+
+| k | height | kinetic | largest overlap | energy residual | hard collisions / sphere / cycle | CPU s |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1e5 | 9.449 ± 0.018 | 3.726 ± 0.004 | 0.033 | -2.6e-3 | 17 | 128 |
+| 1e6 | 9.374 ± 0.011 | 3.745 ± 0.010 | 0.0090 | -2.1e-3 | 35 | 262 |
+| 1e7 | 9.318 ± 0.006 | 3.750 ± 0.011 | 0.0028 | -1.5e-3 | 83 | 521 |
+| 1e8 | 9.327 ± 0.008 | 3.755 ± 0.008 | 0.00080 | -8.4e-4 | 208 | 774 |
+| 1e9 | 9.315 ± 0.016 | 3.760 ± 0.004 | 0.00025 | -4.9e-4 | 479 | 836 |
+
+- Height is flat from k = 1e7 (9.318, 9.327, 9.315). k = 1e6 is 0.6% above
+  that and k = 1e5 1.4%.
+- Kinetic energy rises by 0.9% from k = 1e5 to 1e9 and by 0.3% from 1e7 to
+  1e9, about the size of the seed scatter.
+- Seed scatter is several times smaller than at the wavy condition.
