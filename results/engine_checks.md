@@ -218,3 +218,30 @@ Gamma 5, f* 0.6, 10 layers, L = 100, three seeds, 60 cycles to settle and
 - Kinetic energy rises by 0.9% from k = 1e5 to 1e9 and by 0.3% from 1e7 to
   1e9, about the size of the seed scatter.
 - Seed scatter is several times smaller than at the wavy condition.
+
+## Hard engine from gentler starts at the flat condition (`scripts/push_start.py`, `results/push_start.json`), 2026-11-15
+
+Gamma 5, f* 0.6, 10 layers, L = 100. Every sphere starts with an upward
+speed of a fraction ("push") of the plate's peak speed. Three seeds, 60
+cycles to settle and 100 measured; a run stalls when it uses 300 million
+events in one twentieth of a cycle.
+
+| push | seed 1 | seed 2 | seed 3 |
+| --- | --- | --- | --- |
+| 0 (default, from flat_compare) | stalled, cycle 2.85 | stalled, 2.75 | stalled, 2.75 |
+| 0.25 | stalled, 5.80 | stalled, 7.75 | overlap, 9.95 |
+| 0.5 | stalled, 1.95 | stalled, 7.85 | stalled, 3.90 |
+| 0.75 | overlap, 3.85 | stalled, 3.90 | stalled, 3.95 |
+| 1.0 | overlap, 7.85 | stalled, 7.85 | stalled, 5.75 |
+
+- 0 of 12 pushed starts get the hard engine through. They get further than
+  the default start (up to cycle 9.95) but every run ends, 9 by stalling and
+  3 by a sphere-pair overlap.
+- Every failure is at phase 0.75 to 0.95 of an odd-numbered cycle (counting
+  from 0), that is at a landing of the period-doubled layer, not in the
+  start-up transient.
+- Hybrid control (tc, k = 1e7) from the half-push start: 3 of 3 completed 160
+  cycles, height 9.328, 9.341, 9.301 (mean 9.323) and kinetic energy 3.752,
+  3.746, 3.752, against 9.318 and 3.750 from the default start.
+- layer_pilot.run now records an engine fail-fast (overlap, sphere inside the
+  plate) as the run's outcome instead of raising.

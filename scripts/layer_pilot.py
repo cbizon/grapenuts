@@ -33,11 +33,17 @@ METHODS = {
 }
 
 
-def run(condition, method, seed):
+def run(condition, method, seed, push=0.0):
+    """One run.  push gives every sphere an initial upward speed of that
+    fraction of the plate's peak speed, so the first contact is gentler (the
+    plate starts at its mid-height moving up at peak speed)."""
     c = CONDITIONS[condition]
     n = int(c["depth"] * L)
     sim = Simulation(n, L, c["gamma"], c["f_star"], float(c["depth"]), seed,
                      dim=2, **METHODS[method])
+    if push:
+        sim.S[:n, K.SVZ] += push * sim.A * sim.om
+        sim.rebuild(sort=False)
     start = time.process_time()
     heights, kinetic = [], []
     energy0 = counts0 = None
@@ -46,8 +52,17 @@ def run(condition, method, seed):
             energy0 = sim.layer_energy()[0]
             counts0 = (sim.cnt.copy(), sim.en.copy())
         for step in range(1, PHASES + 1):
-            if sim.run_to(sim.T * step / PHASES, max_events=MAX_EVENTS_PER_STEP):
-                return dict(finished=False, cycles=cycle + (step - 1) / PHASES,
+            try:
+                stalled = sim.run_to(sim.T * step / PHASES, max_events=MAX_EVENTS_PER_STEP)
+            except ValueError as failure:
+                # the engine's fail-fast on a non-physical state (an overlap,
+                # a sphere inside the plate) ends the run and is its outcome
+                return dict(finished=False, failure=str(failure),
+                            cycles=cycle + (step - 1) / PHASES,
+                            cpu_seconds=time.process_time() - start)
+            if stalled:
+                return dict(finished=False, failure="stalled",
+                            cycles=cycle + (step - 1) / PHASES,
                             cpu_seconds=time.process_time() - start)
             if cycle >= SETTLE:
                 d = sim.diagnostics()

@@ -1,0 +1,175 @@
+{
+ "runs": [
+  {
+   "condition": "flat",
+   "method": "hard",
+   "seed": 3,
+   "push": 0.25,
+   "finished": false,
+   "failure": "sphere pair overlaps",
+   "cycles": 9.95,
+   "cpu_seconds": 158.171844
+  },
+  {
+   "condition": "flat",
+   "method": "hard",
+   "seed": 1,
+   "push": 1.0,
+   "finished": false,
+   "failure": "sphere pair overlaps",
+   "cycles": 7.85,
+   "cpu_seconds": 180.591253
+  },
+  {
+   "condition": "flat",
+   "method": "hard",
+   "seed": 2,
+   "push": 0.25,
+   "finished": false,
+   "failure": "stalled",
+   "cycles": 7.75,
+   "cpu_seconds": 321.03896399999996
+  },
+  {
+   "condition": "flat",
+   "method": "hard",
+   "seed": 3,
+   "push": 0.75,
+   "finished": false,
+   "failure": "stalled",
+   "cycles": 3.95,
+   "cpu_seconds": 341.105845
+  },
+  {
+   "condition": "flat",
+   "method": "hard",
+   "seed": 3,
+   "push": 0.5,
+   "finished": false,
+   "failure": "stalled",
+   "cycles": 3.9,
+   "cpu_seconds": 349.273759
+  },
+  {
+   "condition": "flat",
+   "method": "hard",
+   "seed": 1,
+   "push": 0.75,
+   "finished": false,
+   "failure": "sphere pair overlaps",
+   "cycles": 3.85,
+   "cpu_seconds": 369.01183100000003
+  },
+  {
+   "condition": "flat",
+   "method": "hard",
+   "seed": 1,
+   "push": 0.5,
+   "finished": false,
+   "failure": "stalled",
+   "cycles": 1.95,
+   "cpu_seconds": 377.913569
+  },
+  {
+   "condition": "flat",
+   "method": "hard",
+   "seed": 2,
+   "push": 0.5,
+   "finished": false,
+   "failure": "stalled",
+   "cycles": 7.85,
+   "cpu_seconds": 401.066776
+  },
+  {
+   "condition": "flat",
+   "method": "hard",
+   "seed": 2,
+   "push": 1.0,
+   "finished": false,
+   "failure": "stalled",
+   "cycles": 7.85,
+   "cpu_seconds": 403.617097
+  },
+  {
+   "condition": "flat",
+   "method": "hard",
+   "seed": 3,
+   "push": 1.0,
+   "finished": false,
+   "failure": "stalled",
+   "cycles": 5.75,
+   "cpu_seconds": 405.37961099999995
+  },
+  {
+   "condition": "flat",
+   "method": "hard",
+   "seed": 1,
+   "push": 0.25,
+   "finished": false,
+   "failure": "stalled",
+   "cycles": 5.8,
+   "cpu_seconds": 465.40972999999997
+  },
+  {
+   "condition": "flat",
+   "method": "tc k=1e7",
+   "seed": 2,
+   "push": 0.5,
+   "finished": true,
+   "cycles": 160,
+   "cpu_seconds": 366.53446599999995,
+   "mean_height": 9.340549513284598,
+   "mean_kinetic_per_sphere": 3.7455080568830987,
+   "energy_residual": -0.0015064094463042555,
+   "hard_collisions_per_sphere_cycle": 83.61789,
+   "kick_forces_per_sphere_cycle": 8314.00278,
+   "springs_made_per_sphere_cycle": 269.1887,
+   "max_overlap": 0.002968332653405348,
+   "max_spring_speed": 12.162389657266688
+  },
+  {
+   "condition": "flat",
+   "method": "hard",
+   "seed": 2,
+   "push": 0.75,
+   "finished": false,
+   "failure": "stalled",
+   "cycles": 3.9,
+   "cpu_seconds": 555.9716880000001
+  },
+  {
+   "condition": "flat",
+   "method": "tc k=1e7",
+   "seed": 1,
+   "push": 0.5,
+   "finished": true,
+   "cycles": 160,
+   "cpu_seconds": 398.47382,
+   "mean_height": 9.327988962880312,
+   "mean_kinetic_per_sphere": 3.751838118185332,
+   "energy_residual": -0.0015673943811838156,
+   "hard_collisions_per_sphere_cycle": 82.03827,
+   "kick_forces_per_sphere_cycle": 8939.52476,
+   "springs_made_per_sphere_cycle": 283.34606,
+   "max_overlap": 0.0028207238549669,
+   "max_spring_speed": 10.93000389010238
+  },
+  {
+   "condition": "flat",
+   "method": "tc k=1e7",
+   "seed": 3,
+   "push": 0.5,
+   "finished": true,
+   "cycles": 160,
+   "cpu_seconds": 357.201741,
+   "mean_height": 9.300918122600251,
+   "mean_kinetic_per_sphere": 3.751727406293275,
+   "energy_residual": -0.0015300350036633083,
+   "hard_collisions_per_sphere_cycle": 84.95053,
+   "kick_forces_per_sphere_cycle": 8471.36038,
+   "springs_made_per_sphere_cycle": 270.6972,
+   "max_overlap": 0.002686168301494707,
+   "max_spring_speed": 12.291030252771776
+  }
+ ]
+}
