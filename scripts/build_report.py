@@ -336,7 +336,7 @@ def main():
     validation = json.loads((RESULTS / "validation.json").read_text())
     pilot = json.loads((RESULTS / "layer_pilot.json").read_text())
     extra = []
-    for name in ("steps_check.json", "stiff_check.json"):
+    for name in ("steps_check.json", "stiff_check.json", "stiff_check_1e9.json"):
         extra += [r for r in json.loads((RESULTS / name).read_text())["runs"] if r["finished"]]
     summary_path = RESULTS / "report_summary.html"
     summary = summary_path.read_text() if summary_path.exists() else "<p>Summary pending.</p>"

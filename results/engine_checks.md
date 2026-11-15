@@ -137,3 +137,27 @@ cycles.
 - k = 1e7 at 50 kicks agrees with k = 1e7 at 20 kicks within scatter.
 - Hard collisions per sphere per cycle rise with k (28, 56, 129, 357) as fewer
   touches fall inside the contact-time window.
+
+## k = 1e9 (`results/stiff_check_1e9.json`), 2026-11-14
+
+Same condition, seeds and protocol, 20 kicks per contact time; 3 of 3 runs
+completed 120 cycles.
+
+| k | height | kinetic | largest overlap | energy residual | CPU s | hard collisions / sphere / cycle |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1e7 | 23.50 ± 0.08 | 15.09 ± 0.11 | 0.0048 | -1.1e-3 | 497 | 129 |
+| 1e8 | 23.45 ± 0.05 | 14.96 ± 0.31 | 0.0014 | -6.4e-4 | 949 | 357 |
+| 1e9 | 23.43 ± 0.05 | 15.18 ± 0.01 | 0.00048 | -4.0e-4 | 1254 | 888 |
+
+- Height is flat from k = 1e7: 23.50, 23.45, 23.43.
+- Kinetic energy at 1e9 is 15.17, 15.18, 15.19; two of three seeds at 1e7 and
+  1e8 gave 15.16 to 15.19 as well. The low values (14.93 at 1e7, 14.52 at
+  1e8) are single seeds.
+
+## What the layer looks like at this condition
+
+One run (k = 1e6, seed 1, 60 settling cycles, then 24 cycles sampled at 20
+phases; not saved as a result file): a standing wave that flips between
+impacts, wavelength about 50 D in the 100 D box, the layer landing every
+second plate period. Column centre-of-mass height varies along the box by
+3.7 D rms on average.
