@@ -1,0 +1,52 @@
+{
+ "runs": [
+  {
+   "condition": "stalls hard",
+   "method": "tc k=1e9",
+   "seed": 1,
+   "finished": true,
+   "cycles": 120,
+   "cpu_seconds": 1256.622541,
+   "mean_height": 23.420616154582056,
+   "mean_kinetic_per_sphere": 15.1708292204768,
+   "energy_residual": -0.00040459252515368394,
+   "hard_collisions_per_sphere_cycle": 893.25064,
+   "kick_forces_per_sphere_cycle": 38703.48966,
+   "springs_made_per_sphere_cycle": 1454.4743,
+   "max_overlap": 0.00044602281298622426,
+   "max_spring_speed": 23.73590776659428
+  },
+  {
+   "condition": "stalls hard",
+   "method": "tc k=1e9",
+   "seed": 2,
+   "finished": true,
+   "cycles": 120,
+   "cpu_seconds": 1149.022887,
+   "mean_height": 23.493048082453722,
+   "mean_kinetic_per_sphere": 15.182143217783091,
+   "energy_residual": -0.0003753653564903348,
+   "hard_collisions_per_sphere_cycle": 880.05413,
+   "kick_forces_per_sphere_cycle": 33038.58876,
+   "springs_made_per_sphere_cycle": 1277.47464,
+   "max_overlap": 0.0004385559750597068,
+   "max_spring_speed": 24.398412014533616
+  },
+  {
+   "condition": "stalls hard",
+   "method": "tc k=1e9",
+   "seed": 3,
+   "finished": true,
+   "cycles": 120,
+   "cpu_seconds": 1355.014693,
+   "mean_height": 23.366356617946497,
+   "mean_kinetic_per_sphere": 15.194593575872316,
+   "energy_residual": -0.0004121551178222473,
+   "hard_collisions_per_sphere_cycle": 891.40437,
+   "kick_forces_per_sphere_cycle": 41727.89964,
+   "springs_made_per_sphere_cycle": 1524.6353,
+   "max_overlap": 0.0004773964723856494,
+   "max_spring_speed": 22.69551715763318
+  }
+ ]
+}
