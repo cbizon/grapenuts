@@ -56,8 +56,8 @@ P_L, P_HX, P_HZ, P_Z0, P_A, P_OM, P_G, P_EPS, P_ALPHA, P_V0, P_B, P_MU, \
     P_BETA0, P_K, P_BTOL, P_RMAX, P_KN, P_KT, P_DT, P_TCW, P_VSOFT = range(21)
 NP_FLOAT = 21
 # int parameter vector layout
-I_NX, I_NY, I_NZ, I_N, I_M, I_MODE, I_TANG = range(7)
-NP_INT = 7
+I_NX, I_NY, I_NZ, I_N, I_M, I_MODE, I_TANG, I_NUDGE = range(8)
+NP_INT = 8
 
 # counters
 C_PP, C_WALL, C_PLATE, C_CELL, C_ADV, C_EVENTS, C_PPSKIP, C_PLSKIP, \
@@ -67,8 +67,8 @@ NCOUNT = 20
 
 # energy and impulse accounting, accumulated over all events (see run_events)
 EN_PLATE_WORK, EN_PLATE_DISS, EN_PP_DISS, EN_WALL_DISS, EN_PLATE_JZ, \
-    EN_WALL_JZ, EN_MAX_GAIN, EN_SOFT_DISS = range(8)
-NEN = 8
+    EN_WALL_JZ, EN_MAX_GAIN, EN_SOFT_DISS, EN_NUDGE = range(9)
+NEN = 9
 # soft-contact state: integers (number of springs) and floats (largest pair
 # and plate overlap seen at a kick, largest approach speed at spring creation,
 # and the total of any positive work done by friction impulses)
@@ -1275,6 +1275,8 @@ def run_events(S, W, mass, cellof, head, nxt, prv, ev_t, ev_type, ev_p, tree,
                         cnt[C_TINYPL] += 1
                 else:
                     cnt[C_PLSKIP] += 1
+                if IP[I_NUDGE] != 0:
+                    nudge_onto_plate(i, t, S, mass, A, om, g, en)
             schedule(i, t, S, cellof, head, nxt, ev_t, ev_type, ev_p, tree, P,
                      IP, cnt, cp, ncp)
         elif typ == EV_WALL:
@@ -1303,6 +1305,20 @@ def run_events(S, W, mass, cellof, head, nxt, prv, ev_t, ev_type, ev_p, tree,
             cnt[C_ADV] += 1
             schedule(i, t, S, cellof, head, nxt, ev_t, ev_type, ev_p, tree, P,
                      IP, cnt, cp, ncp)
+
+
+@njit(cache=True, inline='always')
+def nudge_onto_plate(i, t, S, mass, A, om, g, en):
+    """Position nudge (from sequel's method/nudge, 16f3334): after a hard
+    plate collision, raise the sphere to two floating-point steps above the
+    plate surface if it is lower, so it always leaves the plate with a
+    strictly positive gap.  Never lowers it.  The potential energy this
+    adds, m g dz, goes to en[EN_NUDGE]; no other accounted term covers it."""
+    surface = A * np.sin(om * t) + S[i, SR]
+    target = np.nextafter(np.nextafter(surface, INF), INF)
+    if S[i, SZ] < target:
+        en[EN_NUDGE] += mass[i] * g * (target - S[i, SZ])
+        S[i, SZ] = target
 
 
 @njit(cache=True)

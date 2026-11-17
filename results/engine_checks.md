@@ -245,3 +245,29 @@ events in one twentieth of a cycle.
   3.746, 3.752, against 9.318 and 3.750 from the default start.
 - layer_pilot.run now records an engine fail-fast (overlap, sphere inside the
   plate) as the run's outcome instead of raising.
+
+## Nudge engine at the flat condition (`scripts/nudge_compare.py`, `results/nudge_compare.json`), 2026-11-15
+
+Branch `nudge-baseline`. Hard spheres plus sequel's position nudge onto the
+plate, no springs. Gamma 5, f* 0.6, 10 layers, L = 100, 60 cycles to settle
+and 100 measured.
+
+- 6 of 6 runs completed 160 cycles (three seeds from the default start,
+  three from the half-push start).
+
+| start | seed | height | kinetic | energy residual | hard collisions / sphere / cycle | CPU s |
+| --- | --- | --- | --- | --- | --- | --- |
+| default | 1 | 9.298 | 3.750 | -1.4e-11 | 4180 | 318 |
+| default | 2 | 9.304 | 3.745 | -1.2e-10 | 5281 | 427 |
+| default | 3 | 9.289 | 3.738 | -5.7e-11 | 5498 | 455 |
+| half push | 1 | 9.286 | 3.758 | -1.2e-10 | 4806 | 350 |
+| half push | 2 | 9.328 | 3.747 | -1.1e-10 | 5902 | 471 |
+| half push | 3 | 9.342 | 3.751 | -1.1e-10 | 7439 | 682 |
+
+- Nudge, all six: height 9.308 ± 0.020, kinetic energy 3.748 ± 0.006.
+- Hybrid (tc) at the same condition: k = 1e7 9.318 ± 0.006 and 3.750 ± 0.011;
+  k = 1e8 9.327 and 3.755; k = 1e9 9.315 and 3.760. The two methods agree
+  within 0.2% in height and 0.3% in kinetic energy, about the seed scatter.
+- The nudge gets there with 4,200 to 7,400 hard collisions per sphere per
+  cycle, against 83 (k = 1e7) to 479 (k = 1e9) plus spring kicks for the
+  hybrid.

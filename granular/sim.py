@@ -115,6 +115,11 @@ class Simulation:
     impulse first and uses the tangential spring only once the contact
     outlasts an isolated collision; ``"spring"`` uses the spring throughout.
     Side walls are always hard.
+
+    ``plate_nudge`` turns on sequel's position nudge: after every hard plate
+    collision the sphere is raised to two floating-point steps above the
+    plate.  It is a separate way of getting through lasting plate contact,
+    for comparison; use it with ``contact_mode="never"``.
     """
 
     def __init__(self, n_particles, box_width, gamma, f_star, depth, seed,
@@ -123,7 +128,7 @@ class Simulation:
                  eps=EPS, alpha=ALPHA, v0=V0, dim=3,
                  contact_mode="never", stiffness=None, steps_per_contact=20.0,
                  kt_ratio=KT_RATIO, tc_window=None, soft_speed_limit=math.inf,
-                 tangential="walton"):
+                 tangential="walton", plate_nudge=False):
         if dim not in (2, 3):
             raise ValueError("dim must be 2 or 3, got %r" % (dim,))
         if contact_mode not in CONTACT_MODES:
@@ -240,6 +245,7 @@ class Simulation:
         self.IP[K.I_M] = M
         self.IP[K.I_MODE] = CONTACT_MODES[contact_mode]
         self.IP[K.I_TANG] = TANGENTIAL_LAWS[tangential]
+        self.IP[K.I_NUDGE] = 1 if plate_nudge else 0
 
         self.cellof = np.zeros(self.N, dtype=np.int64)
         self.head = -np.ones(nx * self.ny * self.nz, dtype=np.int64)
